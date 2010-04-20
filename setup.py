@@ -72,6 +72,9 @@ setup(name="lzw",
       author=lzw.__author__,
       author_email=lzw.__email__,
       url=lzw.__url__,
+      license=lzw.__license__,
+      platform='any',
+      download_url='http://pypi.python.org/packages/source/l/lzw/lzw-0.01.tar.gz',
 
       classifiers = [
         "Development Status :: 2 - Pre-Alpha",
