@@ -1,0 +1,6 @@
+
+.*\.pyc$
+.*~$
+^doc/.+
+^dist/.+
+^MANIFEST
