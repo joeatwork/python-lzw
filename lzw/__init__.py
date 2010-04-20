@@ -54,7 +54,7 @@ True
 
 __author__ = "Joe Bowers"
 __license__ = "MIT License"
-__version__ = "0.01"
+__version__ = "0.01.01"
 __status__ = "Development"
 __email__ = "joerbowers@gmail.com"
 __url__ = "http://www.joe-bowers.com/static/lzw"

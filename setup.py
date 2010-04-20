@@ -73,7 +73,7 @@ setup(name="lzw",
       author_email=lzw.__email__,
       url=lzw.__url__,
       license=lzw.__license__,
-      platform='any',
+      platforms='Python 2.6',
       download_url='http://pypi.python.org/packages/source/l/lzw/lzw-0.01.tar.gz',
 
       classifiers = [
@@ -89,7 +89,7 @@ setup(name="lzw",
 
       long_description = """
 A pure python module for compressing and decompressing streams of
-data, built around iterators.
+data, built around iterators. Requires python 2.6
 """,
 
       cmdclass = { 
