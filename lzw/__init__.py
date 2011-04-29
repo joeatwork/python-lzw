@@ -54,7 +54,7 @@ True
 
 __author__ = "Joe Bowers"
 __license__ = "MIT License"
-__version__ = "0.01.01"
+__version__ = "0.01.11"
 __status__ = "Development"
 __email__ = "joerbowers@gmail.com"
 __url__ = "http://www.joe-bowers.com/static/lzw"
@@ -174,8 +174,7 @@ class BitPacker(object):
     Translates a stream of lzw codepoints into a variable width packed
     stream of bytes, for use by L{BitUnpacker}.  One of a (potential)
     set of encoders for a stream of LZW codepoints, intended to behave
-    as closely to the TIFF variable-width encoding scheme as closely
-    as possible.
+    as closely to the TIFF variable-width encoding as possible.
 
     The inbound stream of integer lzw codepoints are packed into
     variable width bit fields, starting at the smallest number of bits
