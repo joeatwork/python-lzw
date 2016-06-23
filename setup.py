@@ -84,6 +84,8 @@ setup(name="lzw",
 
       packages = ['lzw'],
 
+      install_requires=['six'],
+
       long_description = """
 A pure python module for compressing and decompressing streams of
 data, built around iterators. Requires python 2.6

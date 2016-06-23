@@ -3,8 +3,8 @@ import lzw
 import unittest
 
 import os
+import six
 import tempfile
-import itertools
 
 TEST_ROOT = os.path.dirname(__file__)
 BIG_FILE = os.path.join(TEST_ROOT, "data", "library-of-congress-smaller.ppm")
@@ -42,7 +42,7 @@ class TestEncoderSlowly(unittest.TestCase):
             checkstream = lzw.readbytes(testfile)
             uncompressed = lzw.decompress(lzw.filebytes(compressedfile))
 
-            for oldbyte, newbyte in itertools.zip_longest(checkstream, uncompressed):
+            for oldbyte, newbyte in six.moves.zip_longest(checkstream, uncompressed):
                 uncompressedsize = uncompressedsize + 1
 
                 if oldbyte != newbyte:

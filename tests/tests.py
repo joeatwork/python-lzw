@@ -2,8 +2,8 @@
 import lzw
 
 import unittest
-import itertools
 import random
+import six
 import struct
 import os
 
@@ -37,7 +37,7 @@ class TestEncoder(unittest.TestCase):
             realbytes = inf.read()
 
         testbytes = b"".join(lzw.readbytes(ENGLISH_FILE))
-        for (old,new) in itertools.zip_longest(realbytes, testbytes):
+        for (old,new) in six.moves.zip_longest(realbytes, testbytes):
             self.assertEqual(old, new)
 
 

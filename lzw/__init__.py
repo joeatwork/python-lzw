@@ -62,6 +62,15 @@ __url__ = "http://www.joe-bowers.com/static/lzw"
 import struct
 import itertools
 
+try:
+    import six
+except ImportError:
+    # WARNING HACK. When the setup.py `import lzw` to compute install_requires
+    # six is not yet installed, so we avoid preventing setup.py from completing.
+    # Consider moving the __version__ & similar attributes elsewhere or
+    # refactoring module layout
+    pass
+
 
 CLEAR_CODE = 256
 END_OF_INFO_CODE = 257
@@ -108,8 +117,8 @@ class ByteEncoder(object):
     >>> bigstr = b"gabba gabba yo gabba gabba gabba yo gabba gabba gabba yo gabba gabba gabba yo"
     >>> encoding = enc.encodetobytes(bigstr)
     >>> encoded = b"".join( b for b in encoding )
-    >>> encoded
-    b'3\\x98LF#\\x08\\x82\\x05\\x04\\x83\\x1eM\\xf0x\\x1c\\x16\\x1b\\t\\x88C\\xe1q(4"\\x1f\\x17\\x85C#1X\\xec.\\x00'
+    >>> encoded == b'3\\x98LF#\\x08\\x82\\x05\\x04\\x83\\x1eM\\xf0x\\x1c\\x16\\x1b\\t\\x88C\\xe1q(4"\\x1f\\x17\\x85C#1X\\xec.\\x00'
+    True
     >>>
     >>> dec = lzw.ByteDecoder()
     >>> decoding = dec.decodefrombytes(encoded)
@@ -209,9 +218,9 @@ class BitPacker(object):
         and bytes following END_OF_INFO_CODE will be aligned to the
         next byte boundary.
 
-        >>> import lzw
+        >>> import lzw, six
         >>> pkr = lzw.BitPacker(258)
-        >>> [ b for b in pkr.pack([ 1, 257]) ] == [ bytes([0]), bytes([0xC0]), bytes([0x40]) ]
+        >>> [ b for b in pkr.pack([ 1, 257]) ] == [ six.int2byte(0), six.int2byte(0xC0), six.int2byte(0x40) ]
         True
         """
         tailbits = []
@@ -291,9 +300,9 @@ class BitUnpacker(object):
         stop the generator, just reset the alignment and the width
 
 
-        >>> import lzw
+        >>> import lzw, six
         >>> unpk = lzw.BitUnpacker(initial_code_size=258)
-        >>> [ i for i in unpk.unpack([ bytes([0]), bytes([0xC0]), bytes([0x40]) ]) ]
+        >>> [ i for i in unpk.unpack([ six.int2byte(0), six.int2byte(0xC0), six.int2byte(0x40) ]) ]
         [1, 257]
         """
         bits = []
@@ -379,16 +388,18 @@ class Decoder(object):
 
         >>> import lzw
         >>> dec = lzw.Decoder()
-        >>> b''.join(dec.decode([103, 97, 98, 98, 97, 32, 258, 260, 262, 121, 111, 263, 259, 261, 256]))
-        b'gabba gabba yo gabba'
+        >>> result = b''.join(dec.decode([103, 97, 98, 98, 97, 32, 258, 260, 262, 121, 111, 263, 259, 261, 256]))
+        >>> result == b'gabba gabba yo gabba'
+        True
 
         """
         codepoints = [ cp for cp in codepoints ]
 
         for cp in codepoints:
             decoded = self._decode_codepoint(cp)
-            for character in decoded:
-                yield bytes([character]) #TODO optimize, casting back to bytes when bytes above
+            for character in six.iterbytes(decoded):
+                # TODO optimize, casting back to bytes when bytes above
+                yield six.int2byte(character)
 
 
 
@@ -401,14 +412,14 @@ class Decoder(object):
         >>> import lzw
         >>> dec = lzw.Decoder()
         >>> beforesize = dec.code_size()
-        >>> dec._decode_codepoint(0x80)
-        b'\\x80'
-        >>> dec._decode_codepoint(0x81)
-        b'\\x81'
+        >>> dec._decode_codepoint(0x80) == b'\\x80'
+        True
+        >>> dec._decode_codepoint(0x81) == b'\\x81'
+        True
         >>> beforesize + 1 == dec.code_size()
         True
-        >>> dec._decode_codepoint(256)
-        b''
+        >>> dec._decode_codepoint(256) == b''
+        True
         >>> beforesize == dec.code_size()
         True
         """
@@ -423,10 +434,10 @@ class Decoder(object):
             if codepoint in self._codepoints:
                 ret = self._codepoints[ codepoint ]
                 if None != self._prefix:
-                    self._codepoints[ len(self._codepoints) ] = self._prefix + bytes([ret[0]])
+                    self._codepoints[ len(self._codepoints) ] = self._prefix + six.int2byte(six.indexbytes(ret, 0))
 
             else:
-                ret = self._prefix + bytes([self._prefix[0]])
+                ret = self._prefix + six.int2byte(six.indexbytes(self._prefix, 0))
                 self._codepoints[ len(self._codepoints) ] = ret
 
             self._prefix = ret
@@ -524,7 +535,7 @@ class Encoder(object):
         # In python3 iterating over the bytestring will return in codepoints,
         # we use the byte([]) constructor to conver this back into bytestring
         # so we can add to new_prefix and key the _prefixes by the bytestring.
-        byte = point if isinstance(point, bytes) else bytes([point])
+        byte = point if isinstance(point, six.binary_type) else six.int2byte(point)
 
         new_prefix = self._buffer
 
@@ -584,8 +595,9 @@ class PagingEncoder(object):
         ...                           b"and the rest can go and play",
         ...                           b"can't touch this" ])
         ...
-        >>> b"".join(coded)
-        b'\\x80\\x1c\\xcc\\'\\x91\\x01\\xa0\\xc2m6\\x99NB\\x03\\xc9\\xbe\\x0b\\x07\\x84\\xc2\\xcd\\xa68|"\\x14 3\\xc3\\xa0\\xd1c\\x94\\x02\\x02\\x80\\x18M\\xc6A\\x01\\xd0\\xd0e\\x10\\x1c\\x8c\\xa73\\xa0\\x80\\xc7\\x02\\x10\\x19\\xcd\\xe2\\x08\\x14\\x10\\xe0l0\\x9e`\\x10\\x10\\x80\\x18\\xcc&\\xe19\\xd0@t7\\x9dLf\\x889\\xa0\\xd2s\\x80@@'
+        >>> result = b"".join(coded)
+        >>> result == b'\\x80\\x1c\\xcc\\'\\x91\\x01\\xa0\\xc2m6\\x99NB\\x03\\xc9\\xbe\\x0b\\x07\\x84\\xc2\\xcd\\xa68|"\\x14 3\\xc3\\xa0\\xd1c\\x94\\x02\\x02\\x80\\x18M\\xc6A\\x01\\xd0\\xd0e\\x10\\x1c\\x8c\\xa73\\xa0\\x80\\xc7\\x02\\x10\\x19\\xcd\\xe2\\x08\\x14\\x10\\xe0l0\\x9e`\\x10\\x10\\x80\\x18\\xcc&\\xe19\\xd0@t7\\x9dLf\\x889\\xa0\\xd2s\\x80@@'
+        True
 
         """
 
@@ -622,7 +634,7 @@ class PagingDecoder(object):
 
         try:
             while 1:
-                cp = next(codepoints)
+                cp = six.next(codepoints)
                 if cp != END_OF_INFO_CODE:
                     yield cp
                 else:
@@ -655,8 +667,9 @@ class PagingDecoder(object):
         ...               b'\\x10\\x80\\x18\\xcc&\\xe19\\xd0@t7\\x9dLf\\x889',
         ...               b'\\xa0\\xd2s\\x80@@'])
         ... )
-        >>> [ b"".join(pg) for pg in pgdecoded ]
-        [b'say hammer yo hammer mc hammer go hammer', b'and the rest can go and play', b"can't touch this", b'']
+        >>> result = [ b"".join(pg) for pg in pgdecoded ]
+        >>> result == [b'say hammer yo hammer mc hammer go hammer', b'and the rest can go and play', b"can't touch this", b'']
+        True
 
         """
 
@@ -690,13 +703,8 @@ def unpackbyte(b):
    Given a one-byte long byte string, returns an integer. Equivalent
    to struct.unpack("B", b)
    """
-   # PYTHON V2
-   # (ret,) = struct.unpack("B", b)
-   # return ret
-
-   # PYTHON V3
    if isinstance(b, bytes):
-       return ord(b)
+       return six.byte2int(b)
    return b
 
 
@@ -718,8 +726,8 @@ def readbytes(filename, buffersize=1024):
     found therein.  Will close the file when the bytes run out.
     """
     with open(filename, "rb") as infile:
-        for byte in filebytes(infile, buffersize):
-            yield bytes([byte])  # TODO optimize, we are re-casting to bytes
+        for byte in six.iterbytes(filebytes(infile, buffersize)):
+            yield six.int2byte(byte)  # TODO optimize, we are re-casting to bytes
 
 
 
