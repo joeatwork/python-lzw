@@ -109,7 +109,7 @@ class ByteEncoder(object):
     >>> encoding = enc.encodetobytes(bigstr)
     >>> encoded = b"".join( b for b in encoding )
     >>> encoded
-    '3\\x98LF#\\x08\\x82\\x05\\x04\\x83\\x1eM\\xf0x\\x1c\\x16\\x1b\\t\\x88C\\xe1q(4"\\x1f\\x17\\x85C#1X\\xec.\\x00'
+    b'3\\x98LF#\\x08\\x82\\x05\\x04\\x83\\x1eM\\xf0x\\x1c\\x16\\x1b\\t\\x88C\\xe1q(4"\\x1f\\x17\\x85C#1X\\xec.\\x00'
     >>>
     >>> dec = lzw.ByteDecoder()
     >>> decoding = dec.decodefrombytes(encoded)
@@ -211,7 +211,7 @@ class BitPacker(object):
 
         >>> import lzw
         >>> pkr = lzw.BitPacker(258)
-        >>> [ b for b in pkr.pack([ 1, 257]) ] == [ chr(0), chr(0xC0), chr(0x40) ]
+        >>> [ b for b in pkr.pack([ 1, 257]) ] == [ bytes([0]), bytes([0xC0]), bytes([0x40]) ]
         True
         """
         tailbits = []
@@ -293,7 +293,7 @@ class BitUnpacker(object):
 
         >>> import lzw
         >>> unpk = lzw.BitUnpacker(initial_code_size=258)
-        >>> [ i for i in unpk.unpack([ chr(0), chr(0xC0), chr(0x40) ]) ]
+        >>> [ i for i in unpk.unpack([ bytes([0]), bytes([0xC0]), bytes([0x40]) ]) ]
         [1, 257]
         """
         bits = []
@@ -379,8 +379,8 @@ class Decoder(object):
 
         >>> import lzw
         >>> dec = lzw.Decoder()
-        >>> ''.join(dec.decode([103, 97, 98, 98, 97, 32, 258, 260, 262, 121, 111, 263, 259, 261, 256]))
-        'gabba gabba yo gabba'
+        >>> b''.join(dec.decode([103, 97, 98, 98, 97, 32, 258, 260, 262, 121, 111, 263, 259, 261, 256]))
+        b'gabba gabba yo gabba'
 
         """
         codepoints = [ cp for cp in codepoints ]
@@ -388,7 +388,7 @@ class Decoder(object):
         for cp in codepoints:
             decoded = self._decode_codepoint(cp)
             for character in decoded:
-                yield character
+                yield bytes([character]) #TODO optimize, casting back to bytes when bytes above
 
 
 
@@ -402,13 +402,13 @@ class Decoder(object):
         >>> dec = lzw.Decoder()
         >>> beforesize = dec.code_size()
         >>> dec._decode_codepoint(0x80)
-        '\\x80'
+        b'\\x80'
         >>> dec._decode_codepoint(0x81)
-        '\\x81'
+        b'\\x81'
         >>> beforesize + 1 == dec.code_size()
         True
         >>> dec._decode_codepoint(256)
-        ''
+        b''
         >>> beforesize == dec.code_size()
         True
         """
@@ -423,10 +423,10 @@ class Decoder(object):
             if codepoint in self._codepoints:
                 ret = self._codepoints[ codepoint ]
                 if None != self._prefix:
-                    self._codepoints[ len(self._codepoints) ] = self._prefix + ret[0]
+                    self._codepoints[ len(self._codepoints) ] = self._prefix + bytes([ret[0]])
 
             else:
-                ret = self._prefix + self._prefix[0]
+                ret = self._prefix + bytes([self._prefix[0]])
                 self._codepoints[ len(self._codepoints) ] = ret
 
             self._prefix = ret
@@ -456,7 +456,7 @@ class Encoder(object):
         self.closed = False
 
         self._max_code_size = max_code_size
-        self._buffer = ''
+        self._buffer = b''
         self._clear_codes()            
 
         if max_code_size < self.code_size():
@@ -482,7 +482,7 @@ class Encoder(object):
 
         if self._buffer:
             yield self._prefixes[ self._buffer ]
-            self._buffer = ''            
+            self._buffer = b''
 
         yield CLEAR_CODE
         self._clear_codes()
@@ -498,7 +498,7 @@ class Encoder(object):
 
         >>> import lzw
         >>> enc = lzw.Encoder()
-        >>> [ cp for cp in enc.encode("gabba gabba yo gabba") ]
+        >>> [ cp for cp in enc.encode(b"gabba gabba yo gabba") ]
         [103, 97, 98, 98, 97, 32, 258, 260, 262, 121, 111, 263, 259, 261, 256]
 
         """
@@ -514,15 +514,20 @@ class Encoder(object):
             yield point
 
 
-    def _encode_byte(self, byte):
+    def _encode_byte(self, point):
         # Yields one or zero bytes, AND changes the internal state of
         # the codebook and prefix buffer.
         #
         # Unless you're in self.encode(), you almost certainly don't
         # want to call this.
 
+        # In python3 iterating over the bytestring will return in codepoints,
+        # we use the byte([]) constructor to conver this back into bytestring
+        # so we can add to new_prefix and key the _prefixes by the bytestring.
+        byte = point if isinstance(point, bytes) else bytes([point])
+
         new_prefix = self._buffer
-        
+
         if new_prefix + byte in self._prefixes:
             new_prefix = new_prefix + byte
         elif new_prefix:
@@ -575,12 +580,12 @@ class PagingEncoder(object):
 
         >>> import lzw
         >>> enc = lzw.PagingEncoder(257, 2**12)
-        >>> coded = enc.encodepages([ "say hammer yo hammer mc hammer go hammer", 
-        ...                           "and the rest can go and play",
-        ...                           "can't touch this" ])
+        >>> coded = enc.encodepages([ b"say hammer yo hammer mc hammer go hammer", 
+        ...                           b"and the rest can go and play",
+        ...                           b"can't touch this" ])
         ...
         >>> b"".join(coded)
-        '\\x80\\x1c\\xcc\\'\\x91\\x01\\xa0\\xc2m6\\x99NB\\x03\\xc9\\xbe\\x0b\\x07\\x84\\xc2\\xcd\\xa68|"\\x14 3\\xc3\\xa0\\xd1c\\x94\\x02\\x02\\x80\\x18M\\xc6A\\x01\\xd0\\xd0e\\x10\\x1c\\x8c\\xa73\\xa0\\x80\\xc7\\x02\\x10\\x19\\xcd\\xe2\\x08\\x14\\x10\\xe0l0\\x9e`\\x10\\x10\\x80\\x18\\xcc&\\xe19\\xd0@t7\\x9dLf\\x889\\xa0\\xd2s\\x80@@'
+        b'\\x80\\x1c\\xcc\\'\\x91\\x01\\xa0\\xc2m6\\x99NB\\x03\\xc9\\xbe\\x0b\\x07\\x84\\xc2\\xcd\\xa68|"\\x14 3\\xc3\\xa0\\xd1c\\x94\\x02\\x02\\x80\\x18M\\xc6A\\x01\\xd0\\xd0e\\x10\\x1c\\x8c\\xa73\\xa0\\x80\\xc7\\x02\\x10\\x19\\xcd\\xe2\\x08\\x14\\x10\\xe0l0\\x9e`\\x10\\x10\\x80\\x18\\xcc&\\xe19\\xd0@t7\\x9dLf\\x889\\xa0\\xd2s\\x80@@'
 
         """
 
@@ -617,7 +622,7 @@ class PagingDecoder(object):
 
         try:
             while 1:
-                cp = codepoints.next()
+                cp = next(codepoints)
                 if cp != END_OF_INFO_CODE:
                     yield cp
                 else:
@@ -641,17 +646,17 @@ class PagingDecoder(object):
         >>> import lzw
         >>> pgdec = lzw.PagingDecoder(initial_code_size=257)
         >>> pgdecoded = pgdec.decodepages(
-        ...     ''.join([ '\\x80\\x1c\\xcc\\'\\x91\\x01\\xa0\\xc2m6',
-        ...               '\\x99NB\\x03\\xc9\\xbe\\x0b\\x07\\x84\\xc2',
-        ...               '\\xcd\\xa68|"\\x14 3\\xc3\\xa0\\xd1c\\x94',
-        ...               '\\x02\\x02\\x80\\x18M\\xc6A\\x01\\xd0\\xd0e',
-        ...               '\\x10\\x1c\\x8c\\xa73\\xa0\\x80\\xc7\\x02\\x10',
-        ...               '\\x19\\xcd\\xe2\\x08\\x14\\x10\\xe0l0\\x9e`\\x10',
-        ...               '\\x10\\x80\\x18\\xcc&\\xe19\\xd0@t7\\x9dLf\\x889',
-        ...               '\\xa0\\xd2s\\x80@@' ])
+        ...     b''.join([b'\\x80\\x1c\\xcc\\'\\x91\\x01\\xa0\\xc2m6',
+        ...               b'\\x99NB\\x03\\xc9\\xbe\\x0b\\x07\\x84\\xc2',
+        ...               b'\\xcd\\xa68|"\\x14 3\\xc3\\xa0\\xd1c\\x94',
+        ...               b'\\x02\\x02\\x80\\x18M\\xc6A\\x01\\xd0\\xd0e',
+        ...               b'\\x10\\x1c\\x8c\\xa73\\xa0\\x80\\xc7\\x02\\x10',
+        ...               b'\\x19\\xcd\\xe2\\x08\\x14\\x10\\xe0l0\\x9e`\\x10',
+        ...               b'\\x10\\x80\\x18\\xcc&\\xe19\\xd0@t7\\x9dLf\\x889',
+        ...               b'\\xa0\\xd2s\\x80@@'])
         ... )
         >>> [ b"".join(pg) for pg in pgdecoded ]
-        ['say hammer yo hammer mc hammer go hammer', 'and the rest can go and play', "can't touch this", '']
+        [b'say hammer yo hammer mc hammer go hammer', b'and the rest can go and play', b"can't touch this", b'']
 
         """
 
@@ -680,18 +685,19 @@ class PagingDecoder(object):
 # Conveniences.
 
 
-# PYTHON V2
 def unpackbyte(b):
    """
    Given a one-byte long byte string, returns an integer. Equivalent
    to struct.unpack("B", b)
    """
-   (ret,) = struct.unpack("B", b)
-   return ret
+   # PYTHON V2
+   # (ret,) = struct.unpack("B", b)
+   # return ret
 
-
-# PYTHON V3
-# def unpackbyte(b): return b
+   # PYTHON V3
+   if isinstance(b, bytes):
+       return ord(b)
+   return b
 
 
 def filebytes(fileobj, buffersize=1024):
@@ -713,7 +719,7 @@ def readbytes(filename, buffersize=1024):
     """
     with open(filename, "rb") as infile:
         for byte in filebytes(infile, buffersize):
-            yield byte
+            yield bytes([byte])  # TODO optimize, we are re-casting to bytes
 
 
 

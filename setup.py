@@ -5,15 +5,7 @@ import doctest
 from unittest import defaultTestLoader, TextTestRunner
 
 import sys
-
-# BUG. At least we should support 3.0, which means getting
-# rid of a bunch of stupid byte-as-string stuff, which is kind
-# of awesome.
-(major_version, minor_version) = sys.version_info[:2]
-if (major_version != 2) or (minor_version < 6):
-    raise Exception("LZW currently requires python 2.6")
-else:
-    import lzw
+import lzw
 
 
 TEST_MODULE_NAME = "tests.tests"

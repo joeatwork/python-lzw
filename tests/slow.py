@@ -42,7 +42,7 @@ class TestEncoderSlowly(unittest.TestCase):
             checkstream = lzw.readbytes(testfile)
             uncompressed = lzw.decompress(lzw.filebytes(compressedfile))
 
-            for oldbyte, newbyte in itertools.izip_longest(checkstream, uncompressed):
+            for oldbyte, newbyte in itertools.zip_longest(checkstream, uncompressed):
                 uncompressedsize = uncompressedsize + 1
 
                 if oldbyte != newbyte:

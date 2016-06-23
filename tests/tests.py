@@ -37,8 +37,7 @@ class TestEncoder(unittest.TestCase):
             realbytes = inf.read()
 
         testbytes = b"".join(lzw.readbytes(ENGLISH_FILE))
-
-        for (old,new) in itertools.izip_longest(realbytes, testbytes):
+        for (old,new) in itertools.zip_longest(realbytes, testbytes):
             self.assertEqual(old, new)
 
 
