@@ -1,6 +1,8 @@
 *.pyc
 *.egg-info/
 
+/.tox/
 /MANIFEST
 /build/
 /dist/
+/env/

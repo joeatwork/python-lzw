@@ -1,5 +1,5 @@
 
-from distutils.core import setup, Command
+from distutils.core import setup, Command, DistutilsError
 import unittest
 import doctest
 from unittest import defaultTestLoader, TextTestRunner
@@ -27,16 +27,19 @@ class RunTestsCommand(Command):
 
     def run(self):
         import lzw
-        doctest.testmod(lzw)
+        success = doctest.testmod(lzw).failed == 0
 
         utests = defaultTestLoader.loadTestsFromName(TEST_MODULE_NAME)
         urunner = TextTestRunner(verbosity=2)
-        urunner.run(utests)
+        success &= urunner.run(utests).wasSuccessful()
 
         if self.runslow:
             utests = defaultTestLoader.loadTestsFromName(SLOW_TEST_MODULE_NAME)
             urunner = TextTestRunner(verbosity=2)
-            urunner.run(utests)
+            success &= urunner.run(utests).wasSuccessful()
+
+        if not success:
+            raise DistutilsError('Test failure')
 
 
 class DocCommand(Command):
