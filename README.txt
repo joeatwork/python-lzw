@@ -2,8 +2,7 @@ This is the README file for lzw, small, low level, pure python module
 for simple, stream-friendly data compression, built around iterators.
 Please see the accompanying LICENSE.txt file for license terms.
 
-lzw currently requires python 2.6 to run, this will likely change to
-support python 3.0 in (near) future releases.
+lzw currently requires python 2.7 or python 3.4 to run.
 
 Before going on, potential users are advised to take a look at the
 gzip, zlib, bz2, zipfile, and tarfile modules available in the python
@@ -65,10 +64,6 @@ code.
 ---
 
 Current dev priorities:
-
-- Support python 3.0, which likely means treating our byte streams as
-  lists of ints until the last possible moment, which also seems like
-  it'll make everything a bit more simple and sane.
 
 - Hunt down some potential user applications, see why they're
   potential rather than actual, and then get on that bus.
