@@ -1,5 +1,2 @@
-# pip Requirements for developing python-lzw (not required to use as a library)
-tox==2.3.1
-
 # Include setup.py's install_requires
 -e .
