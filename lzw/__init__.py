@@ -52,25 +52,10 @@ True
 
 """
 
-__author__ = "Joe Bowers"
-__license__ = "MIT License"
-__version__ = "0.01.11"
-__status__ = "Development"
-__email__ = "joerbowers@gmail.com"
-__url__ = "http://www.joe-bowers.com/static/lzw"
 
 import struct
 import itertools
-
-try:
-    import six
-except ImportError:
-    # WARNING HACK. When the setup.py `import lzw` to compute install_requires
-    # six is not yet installed, so we avoid preventing setup.py from completing.
-    # Consider moving the __version__ & similar attributes elsewhere or
-    # refactoring module layout
-    pass
-
+import six
 
 CLEAR_CODE = 256
 END_OF_INFO_CODE = 257

@@ -1,12 +1,17 @@
 
-from distutils.core import setup, Command, DistutilsError
+from setuptools import setup, Command, distutils
 import unittest
 import doctest
 from unittest import defaultTestLoader, TextTestRunner
 
 import sys
-import lzw
 
+__author__ = "Joe Bowers"
+__license__ = "MIT License"
+__version__ = "0.2.11"
+__status__ = "Development"
+__email__ = "joerbowers@gmail.com"
+__url__ = "http://www.joe-bowers.com/static/lzw"
 
 TEST_MODULE_NAME = "tests.tests"
 SLOW_TEST_MODULE_NAME = "tests.slow"
@@ -39,7 +44,7 @@ class RunTestsCommand(Command):
             success &= urunner.run(utests).wasSuccessful()
 
         if not success:
-            raise DistutilsError('Test failure')
+            raise distutils.errors.DistutilsError('Test failure')
 
 
 class DocCommand(Command):
@@ -63,11 +68,11 @@ setup(name="lzw",
       description="Low Level, pure python lzw compression/decompression library",
 
       py_modules=MODULES,
-      version=lzw.__version__,
-      author=lzw.__author__,
-      author_email=lzw.__email__,
-      url=lzw.__url__,
-      license=lzw.__license__,
+      version=__version__,
+      author=__author__,
+      author_email=__email__,
+      url=__url__,
+      license=__license__,
 
       classifiers = [
         "Development Status :: 2 - Pre-Alpha",
